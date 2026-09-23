@@ -38,10 +38,10 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/RmznSd13/MockPulse"
-Documentation = "https://github.com/RmznSd13/MockPulse#readme"
-Repository = "https://github.com/RmznSd13/MockPulse.git"
-Issues = "https://github.com/RmznSd13/MockPulse/issues"
+Homepage = "https://github.com/nazarick13/MockPulse"
+Documentation = "https://github.com/nazarick13/MockPulse#readme"
+Repository = "https://github.com/nazarick13/MockPulse.git"
+Issues = "https://github.com/nazarick13/MockPulse/issues"
 
 [project.scripts]
 mockpulse = "main:main"

@@ -10,7 +10,7 @@
       "response": {
         "service": "MockPulse Core",
         "status": "ONLINE",
-        "docs": "https://github.com/RmznSd13/MockPulse",
+        "docs": "https://github.com/nazarick13/MockPulse",
         "endpoints": {
           "telemetry_metrics": "/_mockpulse/metrics",
           "registered_routes": "/_mockpulse/routes",
