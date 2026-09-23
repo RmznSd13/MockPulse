@@ -1,0 +1,101 @@
+### ==============================================================================
+### MockPulse - Exhaustive End-to-End Test Scenarios
+### Run directly inside VS Code via the 'REST Client' extension
+### ==============================================================================
+
+@baseUrl = http://127.0.0.1:8080
+
+### ------------------------------------------------------------------------------
+### 1. SYSTEM & HEALTH CHECK
+### ------------------------------------------------------------------------------
+
+### 1.1 Root Info & Discovered Endpoints
+GET {{baseUrl}}/
+Accept: application/json
+
+### 1.2 Health Probe
+GET {{baseUrl}}/health
+Accept: application/json
+
+### 1.3 Internal Telemetry & P95/P99 Latency Metrics
+GET {{baseUrl}}/_mockpulse/metrics
+Accept: application/json
+
+### 1.4 List All Loaded Mock Routes
+GET {{baseUrl}}/_mockpulse/routes
+Accept: application/json
+
+
+### ------------------------------------------------------------------------------
+### 2. AUTHENTICATION & BUSINESS REST ENDPOINTS
+### ------------------------------------------------------------------------------
+
+### 2.1 Authenticate / Obtain JWT Token
+POST {{baseUrl}}/api/v1/auth/token
+Content-Type: application/json
+
+{
+  "client_id": "test-client",
+  "client_secret": "super-secret"
+}
+
+### 2.2 List Products Catalog
+GET {{baseUrl}}/api/v1/products
+Accept: application/json
+
+### 2.3 Fetch Specific User (Path Parameter Extraction)
+GET {{baseUrl}}/api/v1/users/usr_staff_42
+Accept: application/json
+
+### 2.4 Create New Order (201 Created with Location Header)
+POST {{baseUrl}}/api/v1/orders
+Content-Type: application/json
+
+{
+  "product_id": "prod_101",
+  "quantity": 2,
+  "customer_email": "engineer@antigravity.internal"
+}
+
+
+### ------------------------------------------------------------------------------
+### 3. CHAOS & FAULT INJECTION SCENARIOS
+### ------------------------------------------------------------------------------
+
+### 3.1 Flaky Payment Gateway (25% Failure Rate with 503 & 250ms Delay)
+# Send this request multiple times! ~1 out of 4 times it will return HTTP 503 with Retry-After.
+POST {{baseUrl}}/api/v1/payments/charge
+Content-Type: application/json
+
+{
+  "order_id": "ord_9901",
+  "card_token": "tok_visa_valid"
+}
+
+### 3.2 Artificial Latency Jitter (300ms to 750ms Sleep)
+# Simulates a slow, legacy external courier API
+GET {{baseUrl}}/api/v1/shipping/rates
+Accept: application/json
+
+### 3.3 Rate Limit Simulation (HTTP 429 Too Many Requests)
+GET {{baseUrl}}/api/v1/third-party/rate-limited
+Accept: application/json
+
+### 3.4 Deterministic Chaos Crash (Always 500 Internal Error)
+GET {{baseUrl}}/api/v1/chaos/crash
+Accept: application/json
+
+
+### ------------------------------------------------------------------------------
+### 4. RFC HTTP COMPLIANCE & ERROR BOUNDARIES
+### ------------------------------------------------------------------------------
+
+### 4.1 RFC 405 Method Not Allowed (Expected 'Allow: GET')
+POST {{baseUrl}}/health
+Content-Type: application/json
+
+{}
+
+### 4.2 RFC 404 Route Not Found
+GET {{baseUrl}}/api/v1/non-existent-service
+Accept: application/json

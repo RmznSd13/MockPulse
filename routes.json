@@ -1,0 +1,159 @@
+{
+  "service": "MockPulse Engine",
+  "version": "0.2.0",
+  "description": "Production-grade mock scenarios showcasing Latency Jitter, Chaos Fault Injection, and REST endpoints.",
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/",
+      "status_code": 200,
+      "response": {
+        "service": "MockPulse Core",
+        "status": "ONLINE",
+        "docs": "https://github.com/mockpulse/mockpulse",
+        "endpoints": {
+          "telemetry_metrics": "/_mockpulse/metrics",
+          "registered_routes": "/_mockpulse/routes",
+          "flaky_payments": "/api/v1/payments/charge",
+          "slow_shipping": "/api/v1/shipping/rates",
+          "rate_limited": "/api/v1/third-party/rate-limited"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "status_code": 200,
+      "response": {
+        "status": "HEALTHY",
+        "engine": "ThreadingHTTPServer",
+        "dependencies": 0
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/token",
+      "status_code": 200,
+      "headers": {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store"
+      },
+      "response": {
+        "access_token": "mockpulse_jwt_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.dummy_signature",
+        "token_type": "Bearer",
+        "expires_in": 3600
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/payments/charge",
+      "status_code": 200,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "response": {
+        "transaction_id": "txn_mp_89431872",
+        "status": "succeeded",
+        "amount": 4999,
+        "currency": "usd"
+      },
+      "latency": {
+        "delay_ms": 250
+      },
+      "fault": {
+        "rate": 0.25,
+        "status_code": 503,
+        "response": {
+          "error": "PaymentGatewayTimeout",
+          "message": "Simulated upstream payment gateway timeout. Retry with exponential backoff.",
+          "retry_after_sec": 2
+        },
+        "headers": {
+          "Retry-After": "2"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/shipping/rates",
+      "status_code": 200,
+      "response": {
+        "origin": "US-EAST",
+        "destination": "EU-WEST",
+        "options": [
+          { "carrier": "FedEx Priority", "rate_usd": 45.00, "estimated_days": 2 },
+          { "carrier": "DHL Express", "rate_usd": 38.50, "estimated_days": 3 },
+          { "carrier": "Economy Ground", "rate_usd": 12.00, "estimated_days": 7 }
+        ]
+      },
+      "latency": {
+        "jitter_min_ms": 300,
+        "jitter_max_ms": 750
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/products",
+      "status_code": 200,
+      "response": {
+        "items": [
+          { "id": "prod_101", "name": "Mechanical Keyboard", "price": 129.99, "stock": 42 },
+          { "id": "prod_102", "name": "Ergonomic Chair", "price": 499.00, "stock": 8 },
+          { "id": "prod_103", "name": "4K Ultra-Wide Monitor", "price": 799.50, "stock": 15 }
+        ],
+        "total": 3
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/users/{id}",
+      "status_code": 200,
+      "response": {
+        "user_id": "{id}",
+        "name": "Jane Doe",
+        "role": "Principal Engineer",
+        "status": "Active"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "status_code": 201,
+      "headers": {
+        "Location": "/api/v1/orders/ord_9901"
+      },
+      "response": {
+        "order_id": "ord_9901",
+        "status": "CREATED",
+        "created_at": "2026-09-23T05:25:00Z"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/third-party/rate-limited",
+      "status_code": 429,
+      "headers": {
+        "Retry-After": "30"
+      },
+      "response": {
+        "error": "TooManyRequests",
+        "message": "Rate limit exceeded. Standard tier permits 100 req/min.",
+        "quota_reset_sec": 30
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/chaos/crash",
+      "status_code": 200,
+      "response": { "status": "Should not be seen" },
+      "fault": {
+        "rate": 1.0,
+        "status_code": 500,
+        "response": {
+          "error": "ChaosEngineForcedCrash",
+          "message": "Deterministic 100% fault injection test."
+        }
+      }
+    }
+  ]
+}
