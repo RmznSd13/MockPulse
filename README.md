@@ -195,7 +195,7 @@ I built MockPulse to solve this locally with zero external dependencies (no pip 
 Building this from scratch using pure Python socket mechanics and RFC-compliant HTTP parsing was an incredible deep-dive into network protocols and systems programming.
 
 Check out the code and architecture documentation on GitHub! 👇
-[Insert your GitHub Repo Link]
+👉 https://github.com/RmznSd13/MockPulse
 
 #Python #SoftwareEngineering #SystemDesign #ChaosEngineering #Backend #Microservices
 ```
