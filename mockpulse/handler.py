@@ -1,6 +1,7 @@
 """
 MockPulse - HTTP Request Handler Pipeline.
 Bridges BaseHTTPRequestHandler with Router, ChaosEngine, Metrics, and Logger.
+Provides Universal CORS and Integration Test Spying.
 Zero external dependencies.
 """
 
@@ -22,7 +23,7 @@ class MockPulseRequestHandler(BaseHTTPRequestHandler):
     Core request pipeline handler.
     Executes in a dedicated thread per connection under ThreadingHTTPServer.
     """
-    server_version = "MockPulse/0.2"
+    server_version = "MockPulse/0.3"
 
     @property
     def config_manager(self):
@@ -68,20 +69,36 @@ class MockPulseRequestHandler(BaseHTTPRequestHandler):
         delay_applied_ms = 0.0
         fault_injected = False
         status_code = 500
+        headers_dict = {}
+        query_params = {}
+        body_str: Optional[str] = None
 
         try:
-            # 1. Hot-reload check on incoming request if configured
+            # 1. Automatic Universal CORS Preflight Handling
+            if method == "OPTIONS":
+                self.send_response(204)
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD")
+                self.send_header("Access-Control-Allow-Headers", "*")
+                self.send_header("Access-Control-Max-Age", "86400")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                status_code = 204
+                return
+
+            # 2. Hot-reload check on incoming request if configured
             if self.config_manager:
                 if self.config_manager.reload_if_needed():
                     if self.logger:
                         print(f"\n[MockPulse] 🔄 Configuration change detected! Routes reloaded successfully.\n")
 
-            # 2. URL and Header Parsing
+            # 3. URL and Header Parsing
             parsed_url = urlparse(self.path)
             path = parsed_url.path
             query_params = parse_qs(parsed_url.query)
+            headers_dict = {k: v for k, v in self.headers.items()}
 
-            # 3. Handle Built-in MockPulse Telemetry Endpoints
+            # 4. Built-in MockPulse Telemetry & Spy Verification Endpoints
             if path == "/_mockpulse/metrics" and method == "GET":
                 snapshot = self.metrics.snapshot() if self.metrics else {}
                 resp = ResponseContext(status_code=200, body=snapshot)
@@ -105,28 +122,48 @@ class MockPulseRequestHandler(BaseHTTPRequestHandler):
                 status_code = 200
                 return
 
-            # Read request body if present
-            body: Optional[bytes] = None
+            # Spy history endpoints for integration testing assertions
+            if path == "/_mockpulse/history":
+                if method == "GET":
+                    history = self.metrics.get_history() if self.metrics else []
+                    resp = ResponseContext(status_code=200, body={"requests": history, "total": len(history)})
+                    self._send_response_context(resp)
+                    status_code = 200
+                    return
+                elif method == "DELETE":
+                    if self.metrics:
+                        self.metrics.clear_history()
+                    resp = ResponseContext(status_code=200, body={"status": "cleared", "message": "History buffer reset"})
+                    self._send_response_context(resp)
+                    status_code = 200
+                    return
+
+            # 5. Read request body if present
+            body_bytes: Optional[bytes] = None
             content_length_header = self.headers.get("Content-Length")
             if content_length_header:
                 try:
                     content_length = int(content_length_header)
-                    body = self.rfile.read(content_length)
+                    body_bytes = self.rfile.read(content_length)
+                    if body_bytes:
+                        try:
+                            body_str = body_bytes.decode("utf-8")
+                        except UnicodeDecodeError:
+                            body_str = f"<binary: {len(body_bytes)} bytes>"
                 except (ValueError, IOError):
-                    body = None
+                    body_bytes = None
 
             # Build RequestContext
-            headers_dict = {k: v for k, v in self.headers.items()}
             request_ctx = RequestContext(
                 method=method,
                 raw_path=self.path,
                 path=path,
                 query_params=query_params,
                 headers=headers_dict,
-                body=body
+                body=body_bytes
             )
 
-            # 4. Resolve Route in Router
+            # 6. Resolve Route in Router
             current_router = self.router
             if not current_router:
                 status_code = 500
@@ -158,7 +195,7 @@ class MockPulseRequestHandler(BaseHTTPRequestHandler):
                 )
                 return
 
-            # 5. Apply Chaos / Fault Injection (if configured for this route)
+            # 7. Apply Chaos / Fault Injection (if configured for this route)
             if self.config_manager:
                 lat_cfg, flt_cfg = self.config_manager.get_chaos_config(method, path)
                 if lat_cfg or flt_cfg:
@@ -175,7 +212,7 @@ class MockPulseRequestHandler(BaseHTTPRequestHandler):
                         self._send_response_context(fault_resp)
                         return
 
-            # 6. Execute Route Handler
+            # 8. Execute Route Handler
             request_ctx.path_params = path_params
             resp_ctx: ResponseContext = route.handler(request_ctx)
             if not isinstance(resp_ctx, ResponseContext):
@@ -196,7 +233,7 @@ class MockPulseRequestHandler(BaseHTTPRequestHandler):
             # High-precision duration calculation
             duration_ms = (time.perf_counter() - start_time) * 1000.0
 
-            # 7. Record Telemetry Metrics
+            # 9. Record Telemetry Metrics and Integration Test History
             if self.metrics:
                 self.metrics.record(
                     method=method,
@@ -204,10 +241,13 @@ class MockPulseRequestHandler(BaseHTTPRequestHandler):
                     status_code=status_code,
                     duration_ms=duration_ms,
                     delay_injected_ms=delay_applied_ms,
-                    fault_injected=fault_injected
+                    fault_injected=fault_injected,
+                    headers=headers_dict,
+                    query_params=query_params,
+                    body_str=body_str
                 )
 
-            # 8. ANSI Console Output
+            # 10. ANSI Console Output
             if self.logger:
                 self.logger.log_request(
                     method=method,
@@ -219,12 +259,16 @@ class MockPulseRequestHandler(BaseHTTPRequestHandler):
                 )
 
     def _send_response_context(self, resp: ResponseContext, is_head: bool = False) -> None:
-        """Serializes and sends a ResponseContext object."""
+        """Serializes and sends a ResponseContext object with automatic CORS."""
         body_bytes, content_type = self._serialize_body(resp.body)
 
         self.send_response(resp.status_code)
 
         headers = dict(resp.headers)
+        # Always inject CORS header for seamless frontend/browser testing
+        if "Access-Control-Allow-Origin" not in headers:
+            headers["Access-Control-Allow-Origin"] = "*"
+
         if content_type and "Content-Type" not in headers:
             headers["Content-Type"] = content_type
         if "Content-Length" not in headers:

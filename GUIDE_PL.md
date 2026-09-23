@@ -164,14 +164,17 @@ Trasy definiowane są w formacie JSON w pliku `routes.json`:
 ```bash
 python3 -m unittest discover tests -v
 ```
-Wszystkie 16 testów wykonuje się w około **60 milisekund** bez konieczności otwierania gniazd sieciowych i bez zewnętrznych bibliotek testowych.
+Wszystkie 18 testów wykonuje się w około **60 milisekund** bez konieczności otwierania gniazd sieciowych i bez zewnętrznych bibliotek testowych.
 
 ### Testowanie w VS Code
 Otwórz plik [test_scenarios.http](test_scenarios.http) w VS Code z zainstalowanym rozszerzeniem **REST Client** i klikaj **Send Request** nad wybranymi scenariuszami.
 
-### Wbudowane Punkty Końcowe Telemetrii
+### Wbudowane Punkty Końcowe Telemetrii i Szpieg Testów (Spy)
 - **`GET /_mockpulse/metrics`:** Zwraca statystyki na żywo: percentyle czasu odpowiedzi (P50, P90, P95, P99), czas działania serwera (uptime), liczbę wywołanych awarii oraz rozkład kodów odpowiedzi HTTP.
 - **`GET /_mockpulse/routes`:** Zwraca pełną listę zarejestrowanych tras wraz ze statusem wstrzykiwania opóźnień i błędów.
+- **`GET /_mockpulse/history`:** Zwraca chronologiczną historię przechwyconych żądań (metoda, ścieżka, nagłówki, treść) do asercji w testach integracyjnych (Pytest, Jest, Cypress).
+- **`DELETE /_mockpulse/history`:** Czyści bufor historii żądań pomiędzy zestawami testów.
+- **Uniwersalna obsługa CORS:** Automatycznie odpowiada na zapytania preflight `OPTIONS` kodem `204 No Content` i nagłówkami `Access-Control-Allow-*`.
 
 ---
 

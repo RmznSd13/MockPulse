@@ -164,14 +164,17 @@ MockPulse endpoints are defined declaratively in `routes.json`:
 ```bash
 python3 -m unittest discover tests -v
 ```
-All 16 unit tests run in ~60ms without requiring network sockets or external testing packages.
+All 18 unit tests run in ~60ms without requiring network sockets or external testing packages.
 
 ### Testing with VS Code REST Client
 Open [test_scenarios.http](test_scenarios.http) in VS Code and click **Send Request** above any scenario.
 
-### Built-in Telemetry Endpoints
+### Built-in Telemetry & Test Spy Endpoints
 - **`GET /_mockpulse/metrics`:** Returns real-time latency percentiles (P50, P90, P95, P99), uptime, fault count, and HTTP status distribution.
 - **`GET /_mockpulse/routes`:** Lists all loaded endpoints with their active chaos and latency configurations.
+- **`GET /_mockpulse/history`:** Returns the chronological log of captured requests (method, path, headers, query params, body) for assertions in integration tests.
+- **`DELETE /_mockpulse/history`:** Clears the request history buffer between test suites.
+- **Universal CORS:** Automatically responds to `OPTIONS` preflight requests with `204 No Content` and `Access-Control-Allow-*` headers.
 
 ---
 

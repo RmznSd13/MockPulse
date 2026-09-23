@@ -27,10 +27,10 @@ When developing microservices or testing frontend integrations, developers frequ
 - 💥 **Chaos Engineering & Fault Injection:** Configurable failure rates (e.g. 25% chance of returning HTTP 503 with custom headers).
 - ⏱️ **Latency & Jitter Simulation:** Realistic network delays with randomized ranges (e.g. uniform jitter between 300ms and 750ms).
 - 🔄 **Zero-Downtime Hot Reloading:** Modify `routes.json` on the fly; updates are detected via filesystem metadata and atomically swapped without dropping active connections.
-- 🧵 **Multi-Threaded Concurrency:** Powered by `ThreadingHTTPServer` to process requests in isolated threads.
-- 📊 **Built-in Telemetry:** Live in-memory ring buffer tracking status distributions and latency percentiles (P50, P90, P95, P99) at `/_mockpulse/metrics`.
-- 🎨 **Visual ANSI Console:** Clean, colorized terminal logging displaying HTTP verbs, status codes, latency timings, and chaos tags.
+- 🌐 **Universal CORS Support:** Full automated preflight `OPTIONS` handling with `Access-Control-Allow-*` headers—seamlessly works with React, Vue, Next.js, and mobile apps out of the box.
+- 🕵️ **Integration Test Spying (`/_mockpulse/history`):** Inspect received request payloads, headers, and query parameters in your Pytest, Jest, or Cypress suites with a clear endpoint (`DELETE /_mockpulse/history`).
 - 📐 **RFC Compliant:** Strict HTTP semantics including distinct `405 Method Not Allowed` responses with `Allow` headers.
+- 📦 **Pip Installable CLI:** Optional global install (`pip install .`) exposing the `mockpulse` binary anywhere in your shell.
 
 ---
 

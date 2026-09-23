@@ -25,6 +25,20 @@ Accept: application/json
 GET {{baseUrl}}/_mockpulse/routes
 Accept: application/json
 
+### 1.5 Inspect Request History (Test Spy Assertion)
+GET {{baseUrl}}/_mockpulse/history
+Accept: application/json
+
+### 1.6 Clear Request History Buffer
+DELETE {{baseUrl}}/_mockpulse/history
+Accept: application/json
+
+### 1.7 Universal CORS Preflight Check (OPTIONS)
+OPTIONS {{baseUrl}}/api/v1/payments/charge
+Origin: http://localhost:3000
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: content-type
+
 
 ### ------------------------------------------------------------------------------
 ### 2. AUTHENTICATION & BUSINESS REST ENDPOINTS

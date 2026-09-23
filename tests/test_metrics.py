@@ -57,6 +57,34 @@ class TestMetricsRegistry(unittest.TestCase):
         snapshot = registry.snapshot()
         self.assertEqual(snapshot["total_requests"], num_threads * records_per_thread)
 
+    def test_request_history_spy(self):
+        registry = MetricsRegistry(max_records=100, max_history=50)
+
+        # Record requests
+        registry.record(
+            method="POST",
+            path="/api/v1/orders",
+            status_code=201,
+            duration_ms=45.2,
+            headers={"Content-Type": "application/json"},
+            query_params={"source": ["mobile"]},
+            body_str='{"order_id": 99}'
+        )
+
+        history = registry.get_history()
+        self.assertEqual(len(history), 1)
+        item = history[0]
+        self.assertEqual(item["method"], "POST")
+        self.assertEqual(item["path"], "/api/v1/orders")
+        self.assertEqual(item["status_code"], 201)
+        self.assertEqual(item["headers"]["Content-Type"], "application/json")
+        self.assertEqual(item["query_params"]["source"], ["mobile"])
+        self.assertEqual(item["body"], '{"order_id": 99}')
+
+        # Clear history
+        registry.clear_history()
+        self.assertEqual(len(registry.get_history()), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
