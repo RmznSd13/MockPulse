@@ -1,5 +1,7 @@
 # ⚡ MockPulse
 
+![MockPulse Banner](assets/mockpulse_banner.jpg)
+
 > **Zero-Dependency Local API Mocking & Chaos Fault Injection Engine**  
 > *Architected with pure Python standard libraries. Zero pip installs. Instant startup.*
 
@@ -199,3 +201,4 @@ Check out the code and architecture documentation on GitHub! 👇
 
 #Python #SoftwareEngineering #SystemDesign #ChaosEngineering #Backend #Microservices
 ```
+
